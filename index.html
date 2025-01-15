@@ -349,15 +349,20 @@ function setupObserver() {
     }
     
     window.observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                steps.forEach(s => s.classList.remove('active'));
-                entry.target.classList.add('active');
-                
-                const segment = entry.target.dataset.segment;
-                transitionToState(segment);
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            steps.forEach(s => s.classList.remove('active'));
+            entry.target.classList.add('active');
+            
+            const segment = entry.target.dataset.segment;
+            transitionToState(segment);
+            
+            // Check if this is the last step
+            if (entry.target === steps[steps.length - 1]) {
+                window.parent.postMessage('scrolly-complete', '*');
             }
-        });
+        }
+    });
     }, {
         threshold: isMobile ? 0.3 : 0.6,
         rootMargin: isMobile ? '-5% 0px -5% 0px' : '-10% 0px -10% 0px'
@@ -549,7 +554,8 @@ function createMarkerElement(text) {
 
     return element;
 }
-        
+    
+
 </script>
 </body>
 </html>
