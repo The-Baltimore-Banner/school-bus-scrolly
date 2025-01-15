@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>School Transportation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        .scrolly-layout {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .map-container {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 50vw;
+            height: 100vh;
+        }
+
+        .content-container {
+            width: 50vw;
+            margin-left: 50vw;
+            /* padding: 1rem; */
+            height: 100%;
+            overflow-y: auto;
+            font-family: inherit;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .step {
+            margin-bottom: 4rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            min-height: 80vh;
+        }
+
+        .step img {
+            width: 100%;
+            height: auto;
+            max-height: 70vh;
+            object-fit: cover;
+            display: block;
+        }
+
+        .step p {
+            padding: 1.5rem;
+            font-size: 1.2rem;
+            line-height: 1.6;
+        }
+
+        .step.active {
+            opacity: 1;
+        }
+
+        p {
+            font-family: "GT-America", sans-serif;
+            font-size: 1.25rem;
+            line-height: 1.75rem;
+            font-weight: 300;
+            text-align: left;
+            color: black;
+        }
+
+        @media (max-width: 768px) {
+            @media (max-width: 768px) {
+    .scrolly-layout {
+        flex-direction: column;
+        height: auto;
+        overflow: visible;
+        padding: 0;  /* Remove padding */
+        position: relative; /* Change from absolute */
+        width: 100%;
+    }
+
+    .map-container {
+        position: sticky;
+        top: 0;
+        width: 100%;
+        height: 40vh;
+        z-index: 1000;
+        overflow: hidden;
+        padding: 0 1rem;
+    }
+
+    .content-container {
+        width: 100%;
+        margin: 0;
+        padding: 0 1rem; /* Horizontal padding for content */
+        height: auto;
+        flex: none;
+        overflow-x: hidden;
+    }
+
+    .step {
+        margin: 0;
+        padding: 0;
+        width: 100%; /* Change from 100vw to 100% */
+        min-height: auto;
+        max-width: 100%;
+    }
+
+    .step img {
+        width: 100%; /* Change from 100vw to 100% */
+        max-height: 40vh;
+        object-fit: cover;
+        margin: 1rem 0; /* Combine margins */
+        padding: 0;
+        display: block;
+    }
+
+    .step p {
+        padding: 1rem;
+        font-size: 1.2rem;
+        line-height: 1.6;
+        white-space: normal;
+        overflow-wrap: break-word;
+    }
+}
+        } 
+    </style>
+</head>
+<body>
+    <div class="scrolly-layout">
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+        
+        <div class="content-container">
+            <div class="step" id="step1" data-segment="1">
+                <img src="assets/image-1.jpg" alt="Step 1">
+                <p>A'Nya, 17, is out the door at 6:08 a.m. to be at the bus stop by 6:13 a.m.</p> 
+                <p>If she is lucky the trip from her Cherry Hill neighborhood to Mergenthaler Vocational-Technical High School in Northeast Baltimore will take her slightly over an hour, the final bus dropping her at 35th Street and the Alameda at 7:20 a.m. with enough time to walk a few blocks and get through the metal detectors at the door before the first bell at 7:45 a.m.</p>
+            </div>
+            
+            <div class="step" id="step2" data-segment="2">
+                <img src="assets/image-2.jpg" alt="Step 2">
+                <p>Catching the first of two buses can be difficult. The stop is late TK, according to a Banner analysis.</p>
+            </div>
+
+            <div class="step" id="step3" data-segment="3">
+                <img src="assets/image-3.jpg" alt="Step 3">
+            </div>
+
+            <div class="step" id="step4" data-segment="4">
+                <img src="assets/image-1.jpg" alt="Step 4">
+                <p>Long before the sun has risen, she arrives at her first stop downtown, where she tries to grab breakfast at a Dunkin Donuts before walking a couple of blocks to the next stop to catch the silver or the green line bus, whichever comes first. The connection is erratic. Sometimes two buses appear at once. Other times, she waits a half hour.</p>
+            </div>
+
+            <div class="step" id="step5" data-segment="5">
+                <img src="assets/image-2.jpg" alt="Step 5">
+                <p>She has to catch one of these buses by TK a.m., or she will be late to first period. Both buses are late TK in TK times. One day, it was TK minutes late.</p>
+            </div>
+
+            <div class="step" id="step6" data-segment="6">
+                <img src="assets/image-3.jpg" alt="Step 6">
+                <p>The time between her first alarm and the first period is nearly 3 hours.</p>
+                <p> “I am not very present in first period. I am there, but I am tired,” she said.</p>
+            </div>
+
+            <div class="step" id="step7" data-segment="7">
+                <img src="assets/image-1.jpg" alt="Step 7">
+                <p></p>
+    </div>
+
+    <script>
+// Initialize Mapbox
+mapboxgl.accessToken = 'pk.eyJ1IjoicnlhbmxpdHRsZSIsImEiOiJjbGFiODV2dmcwMWlmM25wcXlrYzlwdzJzIn0.Tc5W4hPge3Q-Ql8EzRzTMw';
+
+// Map states configuration
+const mapStates = {
+    1: {
+        desktop: {
+            center: [-76.619, 39.290],
+            zoom: 12.5,
+            maxBounds: [[-79.4877, 37.8855], [-75.0489, 39.723]]
+        },
+        mobile: {
+            center: [-76.619, 39.290],
+            zoom: 10.55,
+            maxBounds: [[-79.4877, 37.8855], [-75.0489, 39.723]]
+        }
+    },
+    2: {
+        desktop: {
+            center: [-76.62161, 39.24982],
+            zoom: 14.39,
+            maxBounds: [[-76.63631, 39.23720], [-76.60692, 39.26243]]
+        },
+        mobile: {
+            center: [-76.62161, 39.24982],
+            zoom: 13.5,
+            maxBounds: [[-76.63631, 39.23720], [-76.60692, 39.26243]]
+        }
+    },
+    3: {
+        desktop: {
+            center: [-76.61499, 39.26467],
+            zoom: 14,
+            maxBounds: [[-76.67059, 39.23994], [-76.55940, 39.28939]]
+        },
+        mobile: {
+            center: [-76.61499, 39.26467],
+            zoom: 13,
+            maxBounds: [[-76.67059, 39.23994], [-76.55940, 39.28939]]
+        }
+    },
+    4: {
+        desktop: {
+            center: [-76.61360, 39.28672],
+            zoom: 15.30,
+            maxBounds: [[-76.62256, 39.27903], [-76.60464, 39.29442]]
+        },
+        mobile: {
+            center: [-76.61360, 39.28672],
+            zoom: 14.30,
+            maxBounds: [[-76.62256, 39.27903], [-76.60464, 39.29442]]
+        }
+    },
+    5: {
+        desktop: {
+            center: [-76.61348, 39.29769],
+            zoom: 14.0,
+            maxBounds: [[-76.62831, 39.28109], [-76.59864, 39.30228]]
+        },
+        mobile: {
+            center: [-76.61348, 39.29769],
+            zoom: 13.0,
+            maxBounds: [[-76.62831, 39.28109], [-76.59864, 39.30228]]
+        }
+    },
+    6: {
+        desktop: {
+            center: [-76.59132, 39.33298],
+            zoom: 15,
+            maxBounds: [[-76.60094, 39.32472], [-76.58169, 39.34124]]
+        },
+        mobile: {
+            center: [-76.59132, 39.33298],
+            zoom: 14,
+            maxBounds: [[-76.60094, 39.32472], [-76.58169, 39.34124]]
+        }
+    },
+    7: {
+        desktop: {
+            center: [-76.619, 39.290],
+            zoom: 12.5,
+            maxBounds: [[-79.4877, 37.8855], [-75.0489, 39.723]]
+        },
+        mobile: {
+            center: [-76.619, 39.290],
+            zoom: 10.55,
+            maxBounds: [[-79.4877, 37.8855], [-75.0489, 39.723]]
+        }
+    }
+};
+
+// Initialize map with first state and zoom constraints
+const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/ryanlittle/cm5v09wt800fb01s3fdau52ms',
+    center: mapStates[1].desktop.center,
+    zoom: mapStates[1].desktop.zoom,
+    maxBounds: mapStates[1].desktop.maxBounds,
+    scrollZoom: false,      // Disable zoom via scroll
+    boxZoom: false,         // Disable box zoom
+    dragRotate: false,      // Disable rotation
+    touchZoomRotate: false, // Disable touch zoom and rotate
+    doubleClickZoom: false  // Disable double click zoom
+});
+
+// Create markers array
+let markers = [];
+
+// Function to update route visibility
+function updateRouteVisibility(state) {
+    switch (state) {
+        case '1':
+            map.setPaintProperty('citysilver-line', 'line-opacity', 0);
+            map.setPaintProperty('bus71-line', 'line-opacity', 0);
+            map.setPaintProperty('green-line', 'line-opacity', 0);
+            map.setPaintProperty('bus54-line', 'line-opacity', 0);
+            break;
+        case '2':
+            map.setPaintProperty('citysilver-line', 'line-opacity', 0);
+            map.setPaintProperty('bus71-line', 'line-opacity', 1);
+            break;
+        case '3':
+            map.setPaintProperty('green-line', 'line-opacity', 1);
+            map.setPaintProperty('bus54-line', 'line-opacity', 0);
+            break;
+        case '4':
+            map.setPaintProperty('citysilver-line', 'line-opacity', 0);
+            map.setPaintProperty('bus71-line', 'line-opacity', 1);
+            map.setPaintProperty('green-line', 'line-opacity', 1);
+            map.setPaintProperty('bus54-line', 'line-opacity', 0);
+            break;
+    }
+}
+
+// Function to transition between states
+function transitionToState(state) {
+    const isMobile = window.innerWidth <= 768;
+    const targetState = mapStates[state][isMobile ? 'mobile' : 'desktop'];
+    
+    map.easeTo({
+        center: targetState.center,
+        zoom: targetState.zoom,
+        duration: 1500,
+        maxBounds: targetState.maxBounds
+    });
+
+    updateRouteVisibility(state);
+}
+
+// Function to setup the observer
+function setupObserver() {
+    const isMobile = window.innerWidth <= 768;
+    const steps = document.querySelectorAll('.step');
+    
+    if (window.observer) {
+        window.observer.disconnect();
+    }
+    
+    window.observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                steps.forEach(s => s.classList.remove('active'));
+                entry.target.classList.add('active');
+                
+                const segment = entry.target.dataset.segment;
+                transitionToState(segment);
+            }
+        });
+    }, {
+        threshold: isMobile ? 0.3 : 0.6,
+        rootMargin: isMobile ? '-5% 0px -5% 0px' : '-10% 0px -10% 0px'
+    });
+
+    steps.forEach(step => window.observer.observe(step));
+}
+
+// Handle resize events
+function handleResize() {
+    const currentState = document.querySelector('.step.active')?.dataset.segment;
+    const isMobile = window.innerWidth <= 768;
+    
+    // Update minimum zoom based on screen size
+    map.setMinZoom(isMobile ? 10 : 11.5);
+    
+    // Ensure current zoom level meets minimum requirement
+    const currentZoom = map.getZoom();
+    const minZoom = isMobile ? 10 : 11.5;
+    if (currentZoom < minZoom) {
+        map.setZoom(minZoom);
+    }
+    
+    if (currentState) {
+        transitionToState(currentState);
+    }
+    map.resize();
+    setupObserver();
+}
+
+// Initialize event listeners
+function initializeEventListeners() {
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('load', handleResize);
+}
+
+// Map load event handler
+map.on('load', () => {
+    // Add map sources
+    map.addSource('citysilver-source', {
+        'type': 'vector',
+        'url': 'mapbox://ryanlittle.1oxv0yzw'
+    });
+
+    map.addSource('bus71-source', {
+        'type': 'vector',
+        'url': 'mapbox://ryanlittle.dx4aug3f'
+    });
+
+    map.addSource('green-source', {
+        'type': 'vector',
+        'url': 'mapbox://ryanlittle.aruh0ii0'
+    });
+
+    map.addSource('bus54-source', {
+        'type': 'vector',
+        'url': 'mapbox://ryanlittle.c36d1w8r'
+    });
+
+    // Add map layers
+    // Bus 71 line and label
+    map.addLayer({
+        'id': 'bus71-line',
+        'type': 'line',
+        'source': 'bus71-source',
+        'source-layer': 'bus-71-53x4pr',
+        'paint': {
+            'line-color': '#a009dc',
+            'line-width': 4,
+            'line-opacity': 0
+        },
+        'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+        }
+    });
+
+    map.addLayer({
+        'id': 'bus71-label',
+        'type': 'symbol',
+        'source': 'bus71-source',
+        'source-layer': 'bus-71-53x4pr',
+        'minzoom': 10,
+        'maxzoom': 22,
+        'layout': {
+            'text-field': 'Bus 71 route',
+            'text-size': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                10, 12,
+                12, 14,
+                14, 16
+            ],
+            'symbol-placement': 'line',
+            'text-offset': [0, -1],
+            'text-allow-overlap': false,
+            'text-ignore-placement': false,
+            'text-font': ['Open Sans Bold'],
+            'text-letter-spacing': 0.1
+        },
+        'paint': {
+            'text-color': '#a009dc',
+            'text-halo-color': '#ffffff',
+            'text-halo-width': 2
+        }
+    });
+
+    // Citysilver line and label
+    map.addLayer({
+        'id': 'citysilver-line',
+        'type': 'line',
+        'source': 'citysilver-source',
+        'source-layer': 'citysilver-bdl6gr',
+        'paint': {
+            'line-color': '#6e6e6e',
+            'line-width': 4,
+            'line-opacity': 0
+        },
+        'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+        }
+    });
+
+    // Add markers
+    const markerElement = createMarkerElement('25 min');
+    const marker1 = new mapboxgl.Marker({
+        element: markerElement,
+        anchor: 'left'
+    }).setLngLat([-76.61454777289688, 39.26209936473819]);
+
+    const secondMarkerElement = createMarkerElement('38 min');
+    const marker2 = new mapboxgl.Marker({
+        element: secondMarkerElement,
+        anchor: 'left'
+    }).setLngLat([-76.61422188248238, 39.293994358390734]);
+
+    const thirdmarkerElement = document.createElement('div');
+    thirdmarkerElement.className = 'custom-marker';
+    thirdmarkerElement.style.cssText = markerElement.style.cssText;
+    thirdmarkerElement.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="min-width: 16px;">
+            <path d="M13.5 5a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm2 2h-4c-.9 0-1.68.6-1.92 1.45L8.7 11H6.5c-.28 0-.5.22-.5.5v2c0 .28.22.5.5.5h3l1.5-2.5L12 15l-2.5 7h2l2.5-7 1 2.5v4.5c0 .55.45 1 1 1s1-.45 1-1v-5c0-.25-.1-.5-.25-.67l-2-2.67L16 11V8c0-.55-.45-1-1-1z" fill="currentColor"/>
+        </svg>
+        12 min
+    `;
+
+    const marker3 = new mapboxgl.Marker({
+        element: thirdmarkerElement,
+        anchor: 'left'
+    }).setLngLat([-76.58892018519846, 39.33282277274563]);
+
+    // Add all markers to map
+    [marker1, marker2, marker3].forEach(marker => {
+        marker.addTo(map);
+        markers.push(marker);
+    });
+
+    // Initialize everything
+    initializeEventListeners();
+    setupObserver();
+});
+
+// Helper function to create marker elements
+function createMarkerElement(text) {
+    const element = document.createElement('div');
+    element.className = 'custom-marker';
+    element.style.cssText = `
+        background: white;
+        border-radius: 4px;
+        padding: 4px 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        opacity: 0.8;
+    `;
+
+    element.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="min-width: 16px;">
+            <path d="M4 16c0 1.1.9 2 2 2h1v2c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-2h6v2c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-2h1c1.1 0 2-.9 2-2V6c0-3-3-3-3-3H7S4 3 4 6v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" fill="currentColor"/>
+        </svg>
+        ${text}
+    `;
+
+    return element;
+}
+        
+</script>
+</body>
+</html>
