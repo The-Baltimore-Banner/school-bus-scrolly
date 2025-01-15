@@ -22,30 +22,34 @@
         }
 
         .scrolly-layout {
-            position: absolute;
+            position: relative;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
             display: flex;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
         .map-container {
-            position: fixed;
+            position: sticky;
             left: 0;
             top: 0;
             width: 50vw;
             height: 100vh;
+            /* align-self: start; */
         }
 
         .content-container {
             width: 50vw;
-            margin-left: 50vw;
-            /* padding: 1rem; */
             height: 100%;
+            /* display: flex;
+            flex-direction: column; */
+            /* padding: 1rem; */
+            /* margin-left: 50vw;
             overflow-y: auto;
-            font-family: inherit;
+            font-family: inherit; */
         }
 
         #map {
@@ -321,6 +325,18 @@ function updateRouteVisibility(state) {
             map.setPaintProperty('green-line', 'line-opacity', 1);
             map.setPaintProperty('bus54-line', 'line-opacity', 0);
             break;
+        case '5':
+            map.setPaintProperty('citysilver-line', 'line-opacity', 0);
+            map.setPaintProperty('bus71-line', 'line-opacity', 1);
+            map.setPaintProperty('green-line', 'line-opacity', 1);
+            map.setPaintProperty('bus54-line', 'line-opacity', 0);
+            break;
+        case '6':
+            map.setPaintProperty('citysilver-line', 'line-opacity', 0);
+            map.setPaintProperty('bus71-line', 'line-opacity', 1);
+            map.setPaintProperty('green-line', 'line-opacity', 1);
+            map.setPaintProperty('bus54-line', 'line-opacity', 0);
+            break;
     }
 }
 
@@ -466,6 +482,54 @@ map.on('load', () => {
         },
         'paint': {
             'text-color': '#a009dc',
+            'text-halo-color': '#ffffff',
+            'text-halo-width': 2
+        }
+    });
+
+    // Green line and label
+    map.addLayer({
+        'id': 'green-line',
+        'type': 'line',
+        'source': 'green-source',
+        'source-layer': 'citylink-green-bgz44v',
+        'paint': {
+            'line-color': '#00b159',
+            'line-width': 4,
+            'line-opacity': 0
+        },
+        'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+        }
+    });
+
+    map.addLayer({
+        'id': 'green-label',
+        'type': 'symbol',
+        'source': 'green-source',
+        'source-layer': 'citylink-green-bgz44v',
+        'minzoom': 10,
+        'maxzoom': 22,
+        'layout': {
+            'text-field': 'CityLink Green',
+            'text-size': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                10, 12,
+                12, 14,
+                14, 16
+            ],
+            'symbol-placement': 'line',
+            'text-offset': [0, -1],
+            'text-allow-overlap': false,
+            'text-ignore-placement': false,
+            'text-font': ['Open Sans Bold'],
+            'text-letter-spacing': 0.1
+        },
+        'paint': {
+            'text-color': '#00b159',
             'text-halo-color': '#ffffff',
             'text-halo-width': 2
         }
