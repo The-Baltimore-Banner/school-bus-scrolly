@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brooke's Commute Map</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/2.15.0/mapbox-gl.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/2.15.0/mapbox-gl.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+        }
+
+        .graphic_container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .graphic_hed {
+            margin-bottom: 20px;
+        }
+
+        .graphic_hed h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.4rem;
+            line-height: 1.4;
+        }
+
+        .map-container {
+            width: 100%;
+            height: 600px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        #brooke-map {
+            width: 100%;
+            height: 100%;
+            background-color: #f5f5f5;
+        }
+
+        .note {
+            font-size: 0.8rem;
+            color: #666;
+            margin: 0;
+        }
+
+        .error-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 4px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="graphic_container">
+        <div class="graphic_hed">
+            <h3>Brooke's commute to school takes 50 minutes when the buses, light rail, and subway are on time</h3>
+        </div>
+        
+        <div class="map-container">
+            <div id="brooke-map"></div>
+            <div id="error-message" class="error-message"></div>
+        </div>
+        
+        <p class="note">Source: Baltimore Banner analysis of Maryland Transit Administration data • Katrina Ventura/The Baltimore Banner</p>
+    </div>
+
+    <script>
+        function createMarkerElement(text) {
+            const element = document.createElement('div');
+            element.className = 'custom-marker';
+            element.style.cssText = `
+                background: white;
+                border-radius: 4px;
+                padding: 4px 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                font-size: 14px;
+                font-weight: 500;
+                opacity: 0.5;
+            `;
+
+            element.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="min-width: 16px;">
+                    <path d="M4 16c0 1.1.9 2 2 2h1v2c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-2h6v2c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-2h1c1.1 0 2-.9 2-2V6c0-3-3-3-3-3H7S4 3 4 6v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" fill="currentColor"/>
+                </svg>
+                ${text}
+            `;
+
+            return element;
+        }
+    
+        document.addEventListener('DOMContentLoaded', () => {
+            // You'll need to replace this with your own access token
+            mapboxgl.accessToken = 'pk.eyJ1IjoicnlhbmxpdHRsZSIsImEiOiJjbGFiODV2dmcwMWlmM25wcXlrYzlwdzJzIn0.Tc5W4hPge3Q-Ql8EzRzTMw';
+            
+            try {
+                const brookeMap = new mapboxgl.Map({
+                    container: 'brooke-map',
+                    style: 'mapbox://styles/ryanlittle/cm5x48cpo00h501rw7zmvh1cr',
+                    center: [-76.619, 39.320],
+                    zoom: 11.5,
+                    maxBounds: [[-79.4877, 37.8855], [-75.0489, 39.723]],
+                    dragPan: false,
+                    dragRotate: false,
+                    scrollZoom: false,
+                    touchZoom: false,
+                    doubleClickZoom: false,
+                    keyboard: false
+                });
+
+                brookeMap.on('error', (e) => {
+                    console.error('Map error:', e);
+                    document.getElementById('error-message').style.display = 'block';
+                    document.getElementById('error-message').textContent = 'Error loading map: ' + e.error.message;
+                });
+
+                brookeMap.on('load', () => {
+                    console.log('Map loaded successfully');
+                    
+                    try {
+                        // Subway Layer
+                        brookeMap.addSource('brooke-subway', {
+                            type: 'vector',
+                            url: 'mapbox://ryanlittle.9eh1mn10'
+                        });
+                    
+                        brookeMap.addLayer({
+                            id: 'subway',
+                            type: 'line',
+                            source: 'brooke-subway',
+                            'source-layer': 'subway-06cmyk',
+                            layout: {
+                                'line-cap': 'round',
+                                'line-join': 'round'
+                            },
+                            paint: {
+                                'line-color': '#2e7f05',
+                                'line-width': 3,
+                                'line-opacity': 1
+                            }
+                        });
+
+                        // Bus Layer
+                        brookeMap.addSource('brooke-bus', {
+                            type: 'vector',
+                            url: 'mapbox://ryanlittle.32wegsm4'
+                        });
+
+                        brookeMap.addLayer({
+                            id: 'bus',
+                            type: 'line',
+                            source: 'brooke-bus',
+                            'source-layer': 'bus-28-39xvjf',
+                            layout: {
+                                'line-cap': 'round',
+                                'line-join': 'round'
+                            },
+                            paint: {
+                                'line-color': '#f6b528',
+                                'line-width': 3,
+                                'line-opacity': 1
+                            }
+                        });
+
+                        brookeMap.addLayer({
+                            id: 'bus-label',
+                            type: 'symbol',
+                            source: 'brooke-bus',
+                            'source-layer': 'bus-28-39xvjf',
+                            'layout': {
+                                'text-field': 'Bus 28',
+                                'text-size': 13,
+                                'symbol-placement': 'point',
+                                'text-offset': [4, -3.5],
+                                'text-allow-overlap': true,          
+                                'text-ignore-placement': true,        
+                                'text-optional': false,               
+                                'text-font': ['Open Sans Bold'],
+                                'text-letter-spacing': 0.2,
+                                'symbol-spacing': 500,               
+                                'text-max-angle': 360,                // Added to allow more angled text
+                                'visibility': 'visible',              // Added to ensure visibility
+                                'text-keep-upright': true,           // Added to keep text readable
+                                'text-padding': 0                     // Reduced padding between labels
+                            },
+                            'paint': {
+                                'text-color': '#f6b528',
+                                'text-halo-color': '#ffffff',
+                                'text-halo-width': 2,
+                                'text-opacity': 1                     // Added to ensure full opacity
+                            },
+                            'minzoom': 0,                            // Added to show at all zoom levels
+                            'maxzoom': 22                            // Added to show at all zoom levels
+                        });
+
+                        brookeMap.addLayer({
+                        id: 'subway-label',
+                        type: 'symbol',
+                        source: 'brooke-subway',
+                        'source-layer': 'subway-06cmyk',
+                        'layout': {
+                            'text-field': 'Metro Subway Link',
+                            'text-size': 13,
+                            'symbol-placement': 'point',     // This is correct
+                            'text-anchor': 'center',
+                            'text-offset': [3.5, 9],
+                            'text-allow-overlap': true,
+                            'text-ignore-placement': true,
+                            'text-optional': false,
+                            'text-font': ['Open Sans Bold'],
+                            'text-letter-spacing': 0.2,
+                            'text-max-angle': 360,                  // Reduced from 360 to prevent extreme angles
+                            'visibility': 'visible',
+                            'text-keep-upright': true,
+                            'text-padding': 0,
+                            'text-rotate': 0                       // Added to keep text horizontal
+                        },
+                        'paint': {
+                            'text-color': '#2e7f05',
+                            'text-halo-color': '#ffffff',
+                            'text-halo-width': 2,
+                            'text-opacity': 1
+                        },
+                        'minzoom': 0,
+                        'maxzoom': 22
+                    });
+
+
+                        
+                        // Polytechnic Layer
+                        brookeMap.addSource('brooke-poly', {
+                            type: 'vector',
+                            url: 'mapbox://ryanlittle.61dk63ws'
+                        });
+
+                        brookeMap.addLayer({
+                            'id': 'brooke-poly-fill',
+                            'type': 'fill',
+                            'source': 'brooke-poly',
+                            'source-layer': 'baltimore_polytechnic-79ucoa',
+                            'paint': {
+                                'fill-color': '#f3afaf',
+                                'fill-opacity': 0.5
+                            }
+                        });
+
+                    const markerElement = createMarkerElement('8 min');
+                        new mapboxgl.Marker({
+                            element: markerElement,
+                            anchor: 'left'
+                        })
+                        .setLngLat([-76.66539602297105, 39.34005439797039])
+                        .addTo(brookeMap);
+                    
+                    const markerElement2 = createMarkerElement('15 min');
+                        new mapboxgl.Marker({
+                            element: markerElement2,
+                            anchor: 'top'
+                        })
+                        .setLngLat([-76.61379977514915,
+            39.289569321136895])  // Different coordinates for second marker
+                        .addTo(brookeMap);
+
+
+
+                    } catch (error) {
+                        console.error('Error adding layers:', error);
+                        document.getElementById('error-message').style.display = 'block';
+                        document.getElementById('error-message').textContent = 'Error adding map layers: ' + error.message;
+                    }
+                });
+            } catch (error) {
+                console.error('Error initializing map:', error);
+                document.getElementById('error-message').style.display = 'block';
+                document.getElementById('error-message').textContent = 'Error initializing map: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>
